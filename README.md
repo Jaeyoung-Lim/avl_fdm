@@ -1,6 +1,6 @@
 # AVL to Gazebo Advanced Lift Drag Plugin Generator
 
-This tool generates Gazebo advanced_lft_drag plugin coefficients directly from AVL files.
+This tool generates Gazebo advanced_lft_drag plugin coefficients directly from AVL files and produces performance polar plots.
 
 ## Quick Start
 
@@ -24,7 +24,12 @@ This will:
 
 2. **Python 3.10+** (for match/case syntax)
 
-3. **evince** (for viewing geometry plots)
+3. **Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **evince** (for viewing geometry plots)
    ```bash
    sudo apt install evince
    ```
@@ -96,10 +101,14 @@ The script recognizes:
 
 ## Files in This Directory
 
-- `input_avl_direct.py` - Main script
+- `input_avl_direct.py` - Main script for generating Gazebo SDF plugins
 - `avl_out_parse.py` - Parses AVL output and generates SDF
+- `plot_sink_polar.py` - Generates sink polar performance plots
+- `example_polar.sh` - Example commands for polar generation
+- `run.sh` - Quick run script
+- `requirements.txt` - Python dependencies
 - `templates/` - SDF template files
-- `fms_fox.avl` - Example AVL file
+- `models/` - Example AVL files (e.g., fms_fox.avl)
 
 ## Troubleshooting
 
@@ -142,6 +151,42 @@ Check that your AVL file has lines with `Sref`, `Cref`, `Bref` and the values ei
 - For custom stall values, edit the generated SDF file
 - The script assumes standard AVL geometry conventions
 - Reference point is where forces and moments are applied
+
+## Plotting Sink Polars
+
+Generate performance polar plots showing sink rate vs airspeed:
+
+```bash
+python3 plot_sink_polar.py --avl_file models/fms_fox.avl --weight 2.0
+```
+
+This will:
+- Run AVL across a range of angles of attack
+- Extract CL and CD coefficients
+- Calculate airspeed and sink rate at each point
+- Generate a sink polar plot with performance metrics
+- Save data to CSV for further analysis
+
+### Options
+
+- `--avl_file` (required): Path to your AVL file
+- `--weight` (required): Aircraft weight in kg
+- `--alpha_min`: Minimum angle of attack (default: -5°)
+- `--alpha_max`: Maximum angle of attack (default: 20°)
+- `--num_points`: Number of points in sweep (default: 25)
+- `--rho`: Air density in kg/m³ (default: 1.225)
+- `--output_dir`: Output directory (default: polar_data)
+- `--show`: Display plot interactively
+
+### Example Output
+
+The script identifies key performance points:
+- **Minimum Sink Rate**: Best for thermal soaring
+- **Best Glide Ratio (L/D)**: Maximum distance per altitude loss
+
+Output files:
+- `<vehicle>_sink_polar.png` - Polar plot
+- `<vehicle>_polar_data.csv` - Raw data (airspeed, sink rate, L/D, etc.)
 
 ## Support
 
