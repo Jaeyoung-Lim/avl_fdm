@@ -34,7 +34,7 @@ This will:
 ### Automated Mode (Recommended)
 
 ```bash
-python3 input_avl_direct.py --avl_file fms_fox.avl --auto
+python3 input_avl_direct.py --avl_file models/fms_fox.avl --auto
 ```
 
 Generates everything automatically and shows the geometry plot.
@@ -42,7 +42,7 @@ Generates everything automatically and shows the geometry plot.
 ### Interactive Mode
 
 ```bash
-python3 input_avl_direct.py --avl_file fms_fox.avl
+python3 input_avl_direct.py --avl_file models/fms_fox.avl
 ```
 
 Opens AVL interactively so you can run commands manually.
@@ -66,7 +66,7 @@ The script creates a directory named after your vehicle containing:
 
 ```bash
 # Generate coefficients for the FMS Fox
-python3 input_avl_direct.py --avl_file fms_fox.avl --auto
+python3 input_avl_direct.py --avl_file models/fms_fox.avl --auto
 
 # Output will be in M2S/M2S.sdf
 ```
