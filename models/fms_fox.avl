@@ -1,0 +1,159 @@
+!***************************************
+!AVL input file for Frigate Mark 2 Surrogate
+!***************************************
+M2S
+ 0.0                     !Mach 
+ 0        0      0.0     !IYsym   IZsym   Zsym
+ 0.746    0.25   3.0     !Sref    Cref    Bref
+ 0.09     0.0    0.009   !Xref    Yref    Zref
+#--------------------------------------------------
+#--------------------------------------------------
+SURFACE 
+WING 
+!Nchordwise  Cspace  Nspanwise  Sspace
+12            1.0     32         -2.0
+YDUPLICATE 
+0.0
+ANGLE
+!assume the bottom of the airfoil is on a waterline
+2.0
+
+SECTION
+!Root
+!Xle    Yle    Zle     Chord   Ainc
+0.      0.     0.      0.333   0.
+AFILE
+ClarkY_tgap1.8pc.dat
+
+!start of flap
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+0.      0.087  0.      0.333   0.
+AFILE
+ClarkY_tgap1.8pc.dat
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+flap  1.0    .771    0.   0.   0.    1
+
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+0.018   0.7    0.      0.257   0.
+AFILE
+ClarkY_tgap1.8pc.dat
+CONTROL
+!name    gain Xhinge Xhvec Yhvec Zhvec SgnDup
+flap     1.0  0.759    0.   0.   0.    1
+CONTROL
+!name    gain Xhinge Xhvec Yhvec Zhvec SgnDup
+aileron  1.0  0.759    0.   0.   0.    -1
+
+!Xle    Yle    Zle     chord   Ainc
+SECTION
+0.038   1.400  0.      0.171   0.
+AFILE
+ClarkY_tgap1.8pc.dat
+CONTROL
+!name    gain Xhinge Xhvec Yhvec Zhvec SgnDup
+aileron  1.0  0.725    0.   0.   0.    -1
+
+!start of curved tip
+SECTION            
+0.039   1.440  0.  0.165  0.
+AFILE
+ClarkY_tgap1.8pc.dat
+SECTION            
+0.042   1.450  0.  0.155  0.
+AFILE
+ClarkY_tgap1.8pc.dat
+SECTION            
+0.047   1.460  0.  0.142  0.
+AFILE
+ClarkY_tgap1.8pc.dat
+SECTION            
+0.056   1.470  0.  0.126  0.
+AFILE
+ClarkY_tgap1.8pc.dat
+SECTION            
+0.077   1.480  0.  0.097  0.
+AFILE
+ClarkY_tgap1.8pc.dat
+
+!****************************************************************
+SURFACE 
+H-TAIL 
+!Nchordwise  Cspace  Nspanwise  Sspace
+8            1.0     12         -2.0
+YDUPLICATE 
+0.0
+ANGLE
+!Need to adjust
+0
+
+SECTION
+!Root
+!Xle    Yle    Zle     Chord   Ainc
+1.02      0.    0.02    0.191   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+elevator  1.0    .56    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+1.04      0.305  0.02   0.159   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+elevator  1.0    .63    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+1.06      0.335  0.02   0.127   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+elevator  1.0    .0    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+1.106      0.355  0.02   0.073   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+elevator  1.0    .0    0.   0.   0.    1
+
+!****************************************************************
+SURFACE 
+V-TAIL 
+!Nchordwise  Cspace  Nspanwise  Sspace
+8            1.0     15         1.0
+
+SECTION
+!Root
+!Xle    Yle    Zle     Chord   Ainc
+.879      0.    0.03    0.26   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+rudder  1.0    .487    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+.879      0.  0.058   0.311   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+rudder  1.0    .48    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+1.112      0.  .303   0.19   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+rudder  1.0    .567    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+1.161      0.  0.343   0.158   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+rudder  1.0    .0    0.   0.   0.    1
+SECTION
+!Xle    Yle    Zle     Chord   Ainc
+1.228      0.  0.363   0.101   0.
+CONTROL
+!name gain Xhinge Xhvec Yhvec Zhvec SgnDup
+rudder  1.0    .0    0.   0.   0.    1
+
+
+
+
+

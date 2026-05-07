@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# AVL outputs
+*.ps
+temp_avl_commands*.txt
+
+# Generated SDF directories
+M2S/
+*/M2S.sdf
+*/M2S.ps
+
+# Any other aircraft output directories
+*/*.sdf
+*/*.ps
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
