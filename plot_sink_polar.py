@@ -260,19 +260,24 @@ Args:
     weight (float): Aircraft weight in Newtons
     area (float): Wing area in m^2
     rho (float): Air density in kg/m^3
+    cd0_parasite (float): Parasite drag coefficient to add to AVL's CD
 
 Return:
     Tuple[np.ndarray, np.ndarray]: Arrays of airspeed and sink rate
 """
 def calculate_sink_polar(results: List[dict], weight: float, 
-                         area: float, rho: float = 1.225) -> Tuple[np.ndarray, np.ndarray]:
+                         area: float, rho: float = 1.225,
+                         cd0_parasite: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
     
     velocities = []
     sink_rates = []
     
     for coeffs in results:
         CL = coeffs['CLtot']
-        CD = coeffs['CDtot']
+        CD_avl = coeffs['CDtot']
+        
+        # Add parasite drag to AVL's calculated drag
+        CD = CD_avl + cd0_parasite
         
         # Skip invalid data points
         if CL <= 0 or CD <= 0:
@@ -390,6 +395,8 @@ Examples:
                        help="Number of points in alpha sweep [default: 25]")
     parser.add_argument("--rho", type=float, default=1.225,
                        help="Air density in kg/m^3 [default: 1.225 at sea level]")
+    parser.add_argument("--cd0_parasite", type=float, default=0.0,
+                       help="Parasite drag coefficient to add (fuselage, gear, interference, etc.) [default: 0.0]")
     parser.add_argument("--output_dir", default="polar_data",
                        help="Directory for output files [default: polar_data]")
     parser.add_argument("--avl_path", default=None,
@@ -438,6 +445,8 @@ Examples:
     print(f"  Wing Span: {span} m")
     print(f"  Weight: {args.weight} kg ({args.weight * 9.81:.2f} N)")
     print(f"  Air Density: {args.rho} kg/m^3")
+    if args.cd0_parasite > 0:
+        print(f"  Parasite Drag (CD0): {args.cd0_parasite}")
     
     # Run AVL sweep
     alpha_range = (args.alpha_min, args.alpha_max, args.num_points)
@@ -451,7 +460,7 @@ Examples:
     
     # Calculate sink polar
     weight_N = args.weight * 9.81  # Convert kg to Newtons
-    velocities, sink_rates = calculate_sink_polar(results, weight_N, area, args.rho)
+    velocities, sink_rates = calculate_sink_polar(results, weight_N, area, args.rho, args.cd0_parasite)
     
     # Plot the polar
     output_plot = os.path.join(args.output_dir, f"{vehicle_name}_sink_polar.png")
@@ -460,14 +469,15 @@ Examples:
     # Save data to CSV
     csv_file = os.path.join(args.output_dir, f"{vehicle_name}_polar_data.csv")
     with open(csv_file, 'w') as f:
-        f.write("Airspeed_m/s,Sink_Rate_m/s,L/D_Ratio,Alpha_deg,CL,CD\n")
+        f.write("Airspeed_m/s,Sink_Rate_m/s,L/D_Ratio,Alpha_deg,CL,CD_avl,CD_total\n")
         for i, (v, s) in enumerate(zip(velocities, sink_rates)):
             if i < len(results):
                 alpha = results[i]['Alpha']
                 CL = results[i]['CLtot']
-                CD = results[i]['CDtot']
-                LD = CL / CD if CD > 0 else 0
-                f.write(f"{v:.4f},{s:.4f},{LD:.4f},{alpha:.4f},{CL:.6f},{CD:.6f}\n")
+                CD_avl = results[i]['CDtot']
+                CD_total = CD_avl + args.cd0_parasite
+                LD = CL / CD_total if CD_total > 0 else 0
+                f.write(f"{v:.4f},{s:.4f},{LD:.4f},{alpha:.4f},{CL:.6f},{CD_avl:.6f},{CD_total:.6f}\n")
     
     print(f"Polar data saved to: {csv_file}")
     
