@@ -93,11 +93,9 @@ The script handles both AVL file formats:
 
 ## Control Surface Types
 
-The script recognizes:
-- `aileron`
-- `elevator`
-- `rudder`
-- `flap` (treated as elevator)
+The script recognizes: `aileron`, `elevator`, `rudder`, `flap`.
+
+Surfaces on a `YDUPLICATE` wing are automatically split into left/right servo entries. Each unique control name in the AVL file maps to one AVL derivative index (`d1`, `d2`, …), and the sign of the right-side entry is handled automatically (e.g. aileron `Cell`/`Cen` are negated for the right side).
 
 ## Files in This Directory
 
@@ -175,18 +173,30 @@ This will:
 - `--alpha_max`: Maximum angle of attack (default: 20°)
 - `--num_points`: Number of points in sweep (default: 25)
 - `--rho`: Air density in kg/m³ (default: 1.225)
-- `--output_dir`: Output directory (default: polar_data)
+- `--cd0_parasite`: Extra parasite drag to add on top of AVL's `CDtot` — use this to account for fuselage, landing gear, and interference drag that AVL does not model (default: 0.0)
+- `--flap_settings`: One or more flap deflection angles in degrees — all curves are overlaid on a single plot (default: `0`)
+- `--output_dir`: Output directory (default: `polar_data`)
 - `--show`: Display plot interactively
+
+### Flap Settings
+
+To compare clean and flapped configurations:
+
+```bash
+python3 plot_sink_polar.py --avl_file models/fms_fox.avl --weight 5.0 --cd0_parasite 0.014 --flap_settings 0 10 20 30 --show
+```
+
+Each flap angle runs a separate AVL sweep (deflecting control surface `d1`) and the results are overlaid on one plot. Square markers indicate minimum sink rate; triangle markers indicate best L/D.
 
 ### Example Output
 
-The script identifies key performance points:
+The script identifies key performance points for each flap setting:
 - **Minimum Sink Rate**: Best for thermal soaring
 - **Best Glide Ratio (L/D)**: Maximum distance per altitude loss
 
 Output files:
-- `<vehicle>_sink_polar.png` - Polar plot
-- `<vehicle>_polar_data.csv` - Raw data (airspeed, sink rate, L/D, etc.)
+- `<vehicle>_sink_polar.png` - Polar plot (all flap settings overlaid)
+- `<vehicle>_polar_flap<deg>.csv` - Raw data per flap setting (airspeed, sink rate, L/D, etc.)
 
 ## Support
 

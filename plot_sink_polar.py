@@ -118,8 +118,8 @@ Args:
 Return:
     List[dict]: List of dictionaries containing alpha, CL, CD, etc.
 """
-def run_avl_sweep(avl_file: str, alpha_range: Tuple[float, float, int], 
-                  avl_path: str, output_dir: str) -> List[dict]:
+def run_avl_sweep(avl_file: str, alpha_range: Tuple[float, float, int],
+                  avl_path: str, output_dir: str, flap_deg: float = 0.0) -> List[dict]:
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -167,16 +167,18 @@ def run_avl_sweep(avl_file: str, alpha_range: Tuple[float, float, int],
     
     results = []
     
-    print(f"Running AVL sweep from {alpha_min}° to {alpha_max}° ({num_points} points)...")
+    flap_label = f"flap={flap_deg}°"
+    print(f"Running AVL sweep from {alpha_min}° to {alpha_max}° ({num_points} points), {flap_label}...")
     
     for i, alpha in enumerate(alphas):
         print(f"  [{i+1}/{num_points}] Alpha = {alpha:.2f}°", end='', flush=True)
         
         # Create AVL command file
-        output_filename = f'polar_alpha_{alpha:.2f}.txt'
+        output_filename = f'polar_flap{flap_deg:.0f}_alpha_{alpha:.2f}.txt'
         output_file = os.path.join(output_dir, output_filename)
-        
+
         avl_commands = f"""oper
+d1 d {flap_deg}
 a a {alpha}
 x
 st {output_filename}
@@ -298,66 +300,60 @@ def calculate_sink_polar(results: List[dict], weight: float,
 
 
 """
-Plot the sink polar.
+Plot sink polars for one or more flap settings on a single figure.
 
 Args:
-    velocities (np.ndarray): Airspeed values in m/s
-    sink_rates (np.ndarray): Sink rate values in m/s
-    output_file (str): Path to save the plot
-    vehicle_name (str): Name of the vehicle
+    datasets (List[Tuple]): List of (velocities, sink_rates, label) tuples, one per flap setting.
+    output_file (str): Path to save the plot.
+    vehicle_name (str): Name of the vehicle.
 """
-def plot_sink_polar(velocities: np.ndarray, sink_rates: np.ndarray, 
-                    output_file: str, vehicle_name: str):
-    
+def plot_sink_polar(datasets: list, output_file: str, vehicle_name: str):
+
+    colors = plt.cm.tab10.colors
     fig, ax = plt.subplots(figsize=(10, 7))
-    
-    # Plot the polar
-    ax.plot(velocities, sink_rates, 'b-', linewidth=2, label='Sink Polar')
-    ax.plot(velocities, sink_rates, 'ro', markersize=4)
-    
-    # Find minimum sink rate (best glide)
-    min_sink_idx = np.argmin(sink_rates)
-    min_sink_velocity = velocities[min_sink_idx]
-    min_sink_rate = sink_rates[min_sink_idx]
-    
-    # Find best glide ratio (minimum sink rate / velocity)
-    glide_ratios = sink_rates / velocities
-    best_glide_idx = np.argmin(glide_ratios)
-    best_glide_velocity = velocities[best_glide_idx]
-    best_glide_sink = sink_rates[best_glide_idx]
-    best_glide_ratio = velocities[best_glide_idx] / sink_rates[best_glide_idx]
-    
-    # Mark special points
-    ax.plot(min_sink_velocity, min_sink_rate, 'gs', markersize=12, 
-            label=f'Min Sink: {min_sink_rate:.3f} m/s @ {min_sink_velocity:.2f} m/s')
-    ax.plot(best_glide_velocity, best_glide_sink, 'ms', markersize=12,
-            label=f'Best L/D: {best_glide_ratio:.1f} @ {best_glide_velocity:.2f} m/s')
-    
-    # Add grid
-    ax.grid(True, alpha=0.3)
-    
-    # Labels and title
-    ax.set_xlabel('Airspeed (m/s)', fontsize=12)
-    ax.set_ylabel('Sink Rate (m/s)', fontsize=12)
-    ax.set_title(f'Sink Polar - {vehicle_name}', fontsize=14, fontweight='bold')
-    ax.legend(loc='best', fontsize=10)
-    
-    # Invert y-axis so lower sink rates are at the top
-    ax.invert_yaxis()
-    
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=150, bbox_inches='tight')
-    print(f"\nSink polar plot saved to: {output_file}")
-    
-    # Print performance summary
+
     print(f"\n{'='*60}")
     print(f"PERFORMANCE SUMMARY - {vehicle_name}")
     print(f"{'='*60}")
-    print(f"Minimum Sink Rate:    {min_sink_rate:.3f} m/s @ {min_sink_velocity:.2f} m/s")
-    print(f"Best Glide Ratio:     {best_glide_ratio:.1f}:1 @ {best_glide_velocity:.2f} m/s")
-    print(f"Velocity Range:       {velocities.min():.2f} - {velocities.max():.2f} m/s")
+
+    for idx, (velocities, sink_rates, label) in enumerate(datasets):
+        color = colors[idx % len(colors)]
+
+        ax.plot(velocities, sink_rates, '-', color=color, linewidth=2, label=label)
+        ax.plot(velocities, sink_rates, 'o', color=color, markersize=4)
+
+        min_sink_idx = np.argmin(sink_rates)
+        min_v = velocities[min_sink_idx]
+        min_s = sink_rates[min_sink_idx]
+        ax.plot(min_v, min_s, 's', color=color, markersize=10,
+                markeredgecolor='black', markeredgewidth=0.8)
+
+        best_ld_idx = np.argmin(sink_rates / velocities)
+        best_v = velocities[best_ld_idx]
+        best_s = sink_rates[best_ld_idx]
+        best_ld = best_v / best_s
+        ax.plot(best_v, best_s, '^', color=color, markersize=10,
+                markeredgecolor='black', markeredgewidth=0.8)
+
+        print(f"\n  {label}")
+        print(f"    Min Sink:   {min_s:.3f} m/s @ {min_v:.2f} m/s")
+        print(f"    Best L/D:   {best_ld:.1f}:1 @ {best_v:.2f} m/s")
+        print(f"    Speed range: {velocities.min():.2f} – {velocities.max():.2f} m/s")
+
+    print(f"\n  Markers: square = min sink,  triangle = best L/D")
     print(f"{'='*60}\n")
-    
+
+    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('Airspeed (m/s)', fontsize=12)
+    ax.set_ylabel('Sink Rate (m/s)', fontsize=12)
+    ax.set_title(f'Sink Polar – {vehicle_name}', fontsize=14, fontweight='bold')
+    ax.legend(loc='best', fontsize=10)
+    ax.invert_yaxis()
+
+    plt.tight_layout()
+    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    print(f"Sink polar plot saved to: {output_file}")
+
     return fig
 
 
@@ -401,9 +397,11 @@ Examples:
                        help="Directory for output files [default: polar_data]")
     parser.add_argument("--avl_path", default=None,
                        help="Path to AVL installation (auto-detected if not specified)")
+    parser.add_argument("--flap_settings", type=float, nargs='+', default=[0.0],
+                       help="Flap deflection angles in degrees to overlay (e.g. 0 10 20 30) [default: 0]")
     parser.add_argument("--show", action="store_true",
                        help="Display the plot interactively")
-    
+
     args = parser.parse_args()
     
     # Check if AVL file exists
@@ -447,39 +445,52 @@ Examples:
     print(f"  Air Density: {args.rho} kg/m^3")
     if args.cd0_parasite > 0:
         print(f"  Parasite Drag (CD0): {args.cd0_parasite}")
-    
-    # Run AVL sweep
+    print(f"  Flap settings: {args.flap_settings} °")
+
     alpha_range = (args.alpha_min, args.alpha_max, args.num_points)
-    results = run_avl_sweep(args.avl_file, alpha_range, args.avl_path, args.output_dir)
-    
-    if len(results) < 3:
-        print("ERROR: Not enough valid data points generated. Check AVL output.")
+    weight_N = args.weight * 9.81
+    datasets = []
+
+    # Run one AVL sweep per flap setting
+    for flap_deg in args.flap_settings:
+        results = run_avl_sweep(args.avl_file, alpha_range, args.avl_path,
+                                args.output_dir, flap_deg)
+
+        if len(results) < 3:
+            print(f"WARNING: Not enough valid data points for flap={flap_deg}°, skipping.")
+            continue
+
+        print(f"\nSuccessfully generated {len(results)} data points for flap={flap_deg}°")
+
+        velocities, sink_rates = calculate_sink_polar(
+            results, weight_N, area, args.rho, args.cd0_parasite)
+
+        label = "Clean" if flap_deg == 0.0 else f"Flap {flap_deg:g}°"
+        datasets.append((velocities, sink_rates, label))
+
+        # Save per-setting CSV
+        csv_file = os.path.join(
+            args.output_dir, f"{vehicle_name}_polar_flap{flap_deg:g}.csv")
+        with open(csv_file, 'w') as f:
+            f.write("Airspeed_m/s,Sink_Rate_m/s,L/D_Ratio,Alpha_deg,CL,CD_avl,CD_total\n")
+            for i, (v, s) in enumerate(zip(velocities, sink_rates)):
+                if i < len(results):
+                    alpha = results[i]['Alpha']
+                    CL = results[i]['CLtot']
+                    CD_avl = results[i]['CDtot']
+                    CD_total = CD_avl + args.cd0_parasite
+                    LD = CL / CD_total if CD_total > 0 else 0
+                    f.write(f"{v:.4f},{s:.4f},{LD:.4f},{alpha:.4f},"
+                            f"{CL:.6f},{CD_avl:.6f},{CD_total:.6f}\n")
+        print(f"Polar data saved to: {csv_file}")
+
+    if not datasets:
+        print("ERROR: No valid data produced for any flap setting.")
         return
-    
-    print(f"\nSuccessfully generated {len(results)} data points")
-    
-    # Calculate sink polar
-    weight_N = args.weight * 9.81  # Convert kg to Newtons
-    velocities, sink_rates = calculate_sink_polar(results, weight_N, area, args.rho, args.cd0_parasite)
-    
-    # Plot the polar
+
+    # Plot all curves together
     output_plot = os.path.join(args.output_dir, f"{vehicle_name}_sink_polar.png")
-    plot_sink_polar(velocities, sink_rates, output_plot, vehicle_name)
-    
-    # Save data to CSV
-    csv_file = os.path.join(args.output_dir, f"{vehicle_name}_polar_data.csv")
-    with open(csv_file, 'w') as f:
-        f.write("Airspeed_m/s,Sink_Rate_m/s,L/D_Ratio,Alpha_deg,CL,CD_avl,CD_total\n")
-        for i, (v, s) in enumerate(zip(velocities, sink_rates)):
-            if i < len(results):
-                alpha = results[i]['Alpha']
-                CL = results[i]['CLtot']
-                CD_avl = results[i]['CDtot']
-                CD_total = CD_avl + args.cd0_parasite
-                LD = CL / CD_total if CD_total > 0 else 0
-                f.write(f"{v:.4f},{s:.4f},{LD:.4f},{alpha:.4f},{CL:.6f},{CD_avl:.6f},{CD_total:.6f}\n")
-    
-    print(f"Polar data saved to: {csv_file}")
+    plot_sink_polar(datasets, output_plot, vehicle_name)
     
     # Show plot if requested
     if args.show:
