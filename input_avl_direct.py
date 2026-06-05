@@ -92,14 +92,21 @@ def parse_avl_file(avl_file_path: str) -> dict:
         
         # Look for SURFACE definitions and count control surfaces
         if line.upper() == 'SURFACE':
-            # Look ahead for CONTROL definitions
+            has_yduplicate = False
+            surface_controls = []  # unique control names in this surface, in order
+
             j = i + 1
-            while j < len(lines) and j < i + 100:  # Look ahead up to 100 lines
+            while j < len(lines):
                 next_line = lines[j].strip()
+
                 if next_line.upper() == 'SURFACE':
                     break
+
+                if next_line.upper() == 'YDUPLICATE':
+                    has_yduplicate = True
+
                 if next_line.upper() == 'CONTROL':
-                    # Get control surface type - skip comment lines
+                    # Get control surface name from next non-comment line
                     k = j + 1
                     while k < len(lines) and k < j + 5:
                         ctrl_line = lines[k].strip()
@@ -107,22 +114,22 @@ def parse_avl_file(avl_file_path: str) -> dict:
                             ctrl_parts = ctrl_line.split()
                             if ctrl_parts:
                                 ctrl_name = ctrl_parts[0].lower()
-                                if 'aileron' in ctrl_name:
-                                    params['control_surfaces'].append('aileron')
-                                    break  # Only count one per surface
-                                elif 'elevator' in ctrl_name:
-                                    params['control_surfaces'].append('elevator')
-                                    break
-                                elif 'rudder' in ctrl_name:
-                                    params['control_surfaces'].append('rudder')
-                                    break
-                                elif 'flap' in ctrl_name:
-                                    # Flaps can be treated as elevators for aerodynamic purposes
-                                    params['control_surfaces'].append('elevator')
-                                    break
+                                if ctrl_name not in surface_controls:
+                                    surface_controls.append(ctrl_name)
+                                break
                         k += 1
-                    break  # Found a control surface for this SURFACE
+
                 j += 1
+
+            # YDUPLICATE surfaces have mirrored left/right control surfaces;
+            # add each unique control name twice so downstream code gets a
+            # separate servo entry per physical side.
+            for ctrl_name in surface_controls:
+                if has_yduplicate:
+                    params['control_surfaces'].append(ctrl_name)  # left
+                    params['control_surfaces'].append(ctrl_name)  # right
+                else:
+                    params['control_surfaces'].append(ctrl_name)
         
         i += 1
     

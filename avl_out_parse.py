@@ -281,7 +281,7 @@ def main(file_name: TextIO, vehicle_type: str, AR: str, mac: str, ref_pt_x: str,
     type_seen = list()
 
     # Dictionary containing the directions that each type of control surface can move.
-    ctrl_direction = {"aileron": 1,"elevator": -1,"rudder": 1}
+    ctrl_direction = {"aileron": 1, "elevator": -1, "rudder": 1, "flap": -1}
 
 	# More set types in the future?
     match plane_type:
@@ -298,8 +298,8 @@ def main(file_name: TextIO, vehicle_type: str, AR: str, mac: str, ref_pt_x: str,
 
                     if ctrl_surface == 'aileron':
                         #Change for right wing aileron by flipping sign
-                        ctrl_surface_mat[seen_index][3] = -float(ctrl_surface_mat[0][3])
-                        ctrl_surface_mat[seen_index][5] = -float(ctrl_surface_mat[0][5])
+                        ctrl_surface_mat[seen_index][3] = -float(ctrl_surface_mat[seen_index][3])
+                        ctrl_surface_mat[seen_index][5] = -float(ctrl_surface_mat[seen_index][5])
 
                     # Split Elevators are assumed to never run differentially. Feel free to add a
                     # condition if your plane does require differential elevator action.
